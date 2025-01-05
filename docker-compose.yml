@@ -11,6 +11,7 @@ services:
       - /app/node_modules
     depends_on:
       - db
+      - rabbitmq  # Ensure RabbitMQ starts before the app
     env_file:
       - .env
 
@@ -24,6 +25,16 @@ services:
       POSTGRES_DB: tickandtalk-postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'  # RabbitMQ message broker port
+      - '15672:15672'  # RabbitMQ management console
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
 
 volumes:
   pgdata:
