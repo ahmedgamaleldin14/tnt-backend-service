@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
+      - '5555:5555'
     volumes:
       - .:/app
       - /app/node_modules
@@ -21,3 +22,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tickandtalk-postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
