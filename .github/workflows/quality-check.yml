@@ -3,10 +3,9 @@ name: Lint and Test
 on:
   push:
     branches:
-      - '**'
+      - main
   pull_request:
-    branches:
-      - '**'
+    types: [synchronize, opened, reopened]
 
 jobs:
   lint-and-test:
@@ -28,4 +27,4 @@ jobs:
         run: npm run lint:check
 
       - name: Run Tests
-        run: npm run test:cov
+        run: npm run test
