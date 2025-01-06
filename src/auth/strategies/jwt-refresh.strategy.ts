@@ -6,7 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../services/auth.service';
 import { REFRESH_TOKEN_COOKIE_NAME } from '../constants/auth.constants';
 import { JwtTokenPayload } from '../interfaces/token-payload.interface';
-import { UserInfo } from '../interfaces/user-info.interface';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -44,6 +43,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
       return null;
     }
     request['user'] = user;
-    return user;
+    return !!user;
   }
 }

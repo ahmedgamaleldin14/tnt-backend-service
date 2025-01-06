@@ -8,7 +8,11 @@ import { UserInfo } from '../interfaces/user-info.interface';
 import {
   SALT_ROUNDS,
   REFRESH_TOKEN_EXPIRATION_S,
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
 } from '../constants/auth.constants';
+import { TokenPair } from '../interfaces/tokens.interface';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -17,12 +21,15 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  async getUserById(id: number): Promise<UserInfo> {
+  async getUserById(id: number): Promise<UserInfo | null> {
     const user = await this.prismaService.user.findUnique({ where: { id } });
-    return AuthService.excludePassword(user);
+    if (user) {
+      return AuthService.excludePassword(user);
+    }
+    return null;
   }
 
-  async findUserByEmail(email: string): Promise<boolean> {
+  async userExistsByEmail(email: string): Promise<boolean> {
     return !!(await this.prismaService.user.findUnique({ where: { email } }));
   }
 
@@ -38,7 +45,7 @@ export class AuthService {
     name: string,
     email: string,
     password: string,
-  ): Promise<UserInfo> {
+  ): Promise<UserInfo | null> {
     const hashedPassword = await bcrypt.hash(
       password,
       await bcrypt.genSalt(SALT_ROUNDS),
@@ -51,7 +58,10 @@ export class AuthService {
       },
     });
 
-    return AuthService.excludePassword(user);
+    if (user) {
+      return AuthService.excludePassword(user);
+    }
+    return null;
   }
 
   async validateUser(
@@ -73,10 +83,7 @@ export class AuthService {
   async generateTokens(
     user: UserInfo,
     existing_refresh_token?: string,
-  ): Promise<{
-    access_token: string;
-    refresh_token: string;
-  }> {
+  ): Promise<TokenPair> {
     const payload: JwtTokenPayload = {
       sub: user.id,
       email: user.email,
@@ -94,19 +101,30 @@ export class AuthService {
   async refreshTokens(
     refreshToken: string,
     renewRefreshToken = false,
-  ): Promise<{
-    access_token: string;
-    refresh_token: string;
-  }> {
+  ): Promise<TokenPair> {
     const payload = this.jwtService.verify(refreshToken);
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.sub },
     });
     if (renewRefreshToken)
-      return this.generateTokens(
-        AuthService.excludePassword(user),
-        refreshToken,
-      );
-    return this.generateTokens(AuthService.excludePassword(user));
+      return this.generateTokens(AuthService.excludePassword(user));
+    return this.generateTokens(AuthService.excludePassword(user), refreshToken);
+  }
+
+  setAuthCookies(res: Response, tokens: TokenPair) {
+    res.cookie(ACCESS_TOKEN_COOKIE_NAME, tokens.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, tokens.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: REFRESH_TOKEN_EXPIRATION_S * 1000,
+    });
+  }
+
+  clearAuthCookies(res: Response) {
+    res.clearCookie(ACCESS_TOKEN_COOKIE_NAME);
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME);
   }
 }
