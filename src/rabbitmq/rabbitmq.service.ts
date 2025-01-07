@@ -25,7 +25,6 @@ export class RabbitmqService {
       this.logger.log(
         `Publishing message to exchange: ${exchange}, routingKey: ${routingKey}`,
       );
-      await this.amqpConnection.publish(exchange, routingKey, message);
       this.logger.log(
         `Message published successfully: ${JSON.stringify(message)}`,
       );

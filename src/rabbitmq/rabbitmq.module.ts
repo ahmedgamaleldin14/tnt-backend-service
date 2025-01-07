@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitmqService } from './rabbitmq.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AppLogger } from '../common/services/logger/logger.service';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { RabbitmqService } from './rabbitmq.service';
       }),
     }),
   ],
-  providers: [RabbitmqService],
-  exports: [RabbitmqService], // Export for use in other modules
+  providers: [RabbitmqService, AppLogger, Logger],
+  exports: [RabbitmqService],
 })
 export class RabbitmqModule {}
