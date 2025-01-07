@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Lint, Test, and Quality Checks
 
 on:
   push:
@@ -10,6 +10,9 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
 
     steps:
       - name: Checkout Code
@@ -18,13 +21,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache Node.js Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install Dependencies
         run: npm install
 
+      - name: Run Prettier Check
+        run: npm run prettier:check
+
       - name: Run Linter
         run: npm run lint:check
 
-      - name: Run Tests
-        run: npm run test
+      - name: Run TypeScript Type Check
+        run: npm run typecheck
+
+      - name: Audit Dependencies
+        run: npm audit --production
