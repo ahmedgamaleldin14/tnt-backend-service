@@ -19,7 +19,8 @@
     "noFallthroughCasesInSwitch": false
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "test/**/*.ts" // Include test files for linting
   ],
   "exclude": [
     "node_modules",
