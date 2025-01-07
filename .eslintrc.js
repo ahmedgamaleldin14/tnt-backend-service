@@ -9,6 +9,7 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier',
+    'plugin:prettier/recommended',
   ],
   ignorePatterns: ['.eslintrc.js'],
   root: true,
@@ -25,5 +26,6 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     'multiline-comment-style': ['error', 'starred-block'],
     'valid-jsdoc': 'warn',
+    'comma-dangle': ['error', 'always-multiline'],
   },
 };
