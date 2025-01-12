@@ -39,9 +39,13 @@ export class AuthController {
       if (user) {
         const tokens = await this.authService.generateTokens(user);
 
-        this.authService.setAuthCookies(res, tokens);
+        this.authService.setRefreshTokenCookie(res, tokens.refresh_token);
 
-        return user;
+        return {
+          message: 'Logged in successfully',
+          access_token: tokens.access_token,
+          user,
+        };
       }
 
       throw new UnauthorizedException({
@@ -67,7 +71,11 @@ export class AuthController {
     try {
       const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
       const tokens = await this.authService.refreshTokens(refreshToken, false);
-      this.authService.setAuthCookies(res, tokens);
+      this.authService.setRefreshTokenCookie(res, tokens.refresh_token);
+      return {
+        message: 'Token refreshed successfully',
+        access_token: tokens.access_token,
+      };
     } catch (e) {
       if (!(e instanceof HttpException))
         throw new InternalServerErrorException({
@@ -82,7 +90,10 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Successfully registered' })
   @ApiBadRequestResponse({ description: 'Email already in use' })
   @Post('register')
-  async register(@Body() request: CreateUserDto) {
+  async register(
+    @Body() request: CreateUserDto,
+    @Res({ passthrough: true }) res,
+  ) {
     try {
       const name = request.name;
       const email = request.email;
@@ -97,7 +108,15 @@ export class AuthController {
 
       const user = await this.authService.createUser(name, email, password);
       if (user) {
-        return user;
+        const tokens = await this.authService.generateTokens(user);
+
+        this.authService.setRefreshTokenCookie(res, tokens.refresh_token);
+
+        return {
+          message: 'User created successfully',
+          access_token: tokens.access_token,
+          user,
+        };
       }
       throw new InternalServerErrorException({
         error_code: 'user_creation_failed',

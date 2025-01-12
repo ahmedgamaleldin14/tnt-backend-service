@@ -10,6 +10,7 @@ import {
   REFRESH_TOKEN_EXPIRATION_S,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_EXPIRATION_S,
 } from '../constants/auth.constants';
 import { TokenPair } from '../interfaces/tokens.interface';
 import { Response } from 'express';
@@ -86,10 +87,14 @@ export class AuthService {
   ): Promise<TokenPair> {
     const payload: JwtTokenPayload = {
       sub: user.id,
-      email: user.email,
-      name: user.name,
+      user: {
+        name: user.name,
+        email: user.email,
+      },
     };
-    const access_token = this.jwtService.sign(payload);
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: ACCESS_TOKEN_EXPIRATION_S,
+    });
     const refresh_token =
       existing_refresh_token ||
       this.jwtService.sign(payload, {
@@ -111,12 +116,8 @@ export class AuthService {
     return this.generateTokens(AuthService.excludePassword(user), refreshToken);
   }
 
-  setAuthCookies(res: Response, tokens: TokenPair) {
-    res.cookie(ACCESS_TOKEN_COOKIE_NAME, tokens.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    });
-    res.cookie(REFRESH_TOKEN_COOKIE_NAME, tokens.refresh_token, {
+  setRefreshTokenCookie(res: Response, refresh_token: string) {
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: REFRESH_TOKEN_EXPIRATION_S * 1000,
